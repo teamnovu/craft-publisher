@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.1.0 - 2026-06-18
+### Added
+
+- Added `EVENT_AFTER_PUBLISH_ENTRY` event on the `Entries` service, fired after each successful scheduled publication. Useful for triggering server-side cache purges. The event carries the canonical entry, the applied draft (or `null` for non-draft schedules), and the `EntryPublish` schedule record. See `EntryPublishedEvent`. ([#8](https://github.com/neustadt-swiss/craft-publisher/issues/8))
+
+### Fixed
+- Fixed redundant DB queries in `EntryPublish::getDraft()` and `getEntry()`: when the result was found, it was not cached, causing a new query on every subsequent call
+- Fixed fatal error in `EntriesController::actionSave()` when the entry's section had been deleted (`$entry->getSection()` could return null)
+- Fixed fatal error in `EntriesController::actionDelete()` when both the draft and the entry were null (entry deleted), causing a null dereference on `getCpEditUrl()`
+- Fixed unclosed database transaction in `Entries::saveEntryPublish()` when `saveElement()` returned false without throwing an exception
+- Fixed infinite retry loop in `Entries::publishDueEntries()`: if both the entry and draft of a scheduled record were not found (e.g. entry deleted), the record was never cleaned up and kept being retried on every cron run. Orphaned records are now deleted with an error log entry
+
 ## 5.0.3 - 2026-01-08
 ### Fixed
 - Fixed metabox styling issues in Craft CMS 5.8+ - improved layout, spacing, and visual consistency with Craft's native UI

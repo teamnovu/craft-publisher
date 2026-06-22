@@ -136,6 +136,8 @@ class EntryPublish extends Element
 
             if ($draft === null) {
                 $this->_draft = false;
+            } else {
+                $this->_draft = $draft;
             }
         }
 
@@ -160,6 +162,8 @@ class EntryPublish extends Element
 
             if ($entry === null) {
                 $this->_entry = false;
+            } else {
+                $this->_entry = $entry;
             }
         }
 

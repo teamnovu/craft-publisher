@@ -51,8 +51,8 @@ class EntriesController extends Controller
             throw new ElementNotFoundException("No element exists with the ID '{$draft->getCanonicalId()}'");
         }
 
-        if ($draft->enabled) {
-            $this->requirePermission('saveEntries:' . $entry->section->uid);
+        if ($draft->enabled && $entry->getSection() !== null) {
+            $this->requirePermission('saveEntries:' . $entry->getSection()->uid);
         }
 
         if ($publishAt !== null) {
@@ -100,8 +100,10 @@ class EntriesController extends Controller
 
             if ($draft !== null) {
                 $this->redirect($draft->getCpEditUrl());
-            } else {
+            } elseif ($entry !== null) {
                 $this->redirect($entry->getCpEditUrl());
+            } else {
+                $this->redirect('entries');
             }
 
             return true;

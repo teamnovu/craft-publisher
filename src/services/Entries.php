@@ -6,6 +6,7 @@ use Craft;
 use craft\base\Component;
 use craft\elements\Entry;
 use neustadt\publisher\elements\EntryPublish;
+use neustadt\publisher\events\EntryPublishedEvent;
 
 /**
  * Class Entries
@@ -14,6 +15,15 @@ use neustadt\publisher\elements\EntryPublish;
  */
 class Entries extends Component
 {
+    /**
+     * Fired after the plugin successfully publishes a scheduled entry or applies
+     * a scheduled draft. The event carries the canonical entry, the draft (if
+     * applicable), and the EntryPublish schedule record.
+     *
+     * @see EntryPublishedEvent
+     */
+    const EVENT_AFTER_PUBLISH_ENTRY = 'afterPublishEntry';
+
     /**
      * @var \DateTime
      */
@@ -53,6 +63,12 @@ class Entries extends Component
 
             $success = false;
 
+            if ($draft === null && $entry === null) {
+                Craft::error('Entry and draft not found for EntryPublish ' . $entryPublish->id . ', removing orphaned record.', 'publisher-x');
+                Craft::$app->elements->deleteElement($entryPublish, true);
+                continue;
+            }
+
             if ($draft !== null) {
                 try {
                     Craft::$app->getDrafts()->applyDraft($draft);
@@ -74,6 +90,14 @@ class Entries extends Component
             // Only delete the scheduled publish entry if the operation was successful
             if ($success) {
                 Craft::$app->elements->deleteElement($entryPublish, true);
+
+                if ($entry !== null && $this->hasEventHandlers(self::EVENT_AFTER_PUBLISH_ENTRY)) {
+                    $event = new EntryPublishedEvent();
+                    $event->entry = $entry;
+                    $event->draft = $draft;
+                    $event->entryPublish = $entryPublish;
+                    $this->trigger(self::EVENT_AFTER_PUBLISH_ENTRY, $event);
+                }
             }
         }
 
@@ -153,6 +177,8 @@ class Entries extends Component
 
                     return true;
                 }
+
+                $transaction->rollBack();
             } catch (\Exception $e) {
                 $transaction->rollBack();
 
