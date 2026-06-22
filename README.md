@@ -73,4 +73,4 @@ Event::on(
 );
 ```
 
-The event is only fired when publication succeeds. If the scheduled entry or draft cannot be found (e.g. the entry was deleted), the orphaned record is cleaned up and the event is not fired.
+The event is only fired when publication succeeds. If the scheduled entry or draft cannot be found (e.g. the entry was deleted), the orphaned record is cleaned up and the event is not fired. 
