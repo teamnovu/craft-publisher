@@ -1,9 +1,9 @@
 <?php
 
-namespace neustadt\publisher\events;
+namespace teamnovu\publisher\events;
 
 use craft\elements\Entry;
-use neustadt\publisher\elements\EntryPublish;
+use teamnovu\publisher\elements\EntryPublish;
 use yii\base\Event;
 
 /**
@@ -13,8 +13,8 @@ use yii\base\Event;
  *
  * Example usage in a module/plugin:
  *
- *     use neustadt\publisher\services\Entries;
- *     use neustadt\publisher\events\EntryPublishedEvent;
+ *     use teamnovu\publisher\services\Entries;
+ *     use teamnovu\publisher\events\EntryPublishedEvent;
  *     use yii\base\Event;
  *
  *     Event::on(

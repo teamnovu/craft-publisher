@@ -1,20 +1,20 @@
 <?php
 
-namespace neustadt\publisher\controllers;
+namespace teamnovu\publisher\controllers;
 
 use Craft;
 use craft\elements\Entry;
 use craft\errors\ElementNotFoundException;
 use craft\helpers\DateTimeHelper;
 use craft\web\Controller;
-use neustadt\publisher\elements\EntryPublish;
-use neustadt\publisher\Publisher;
+use teamnovu\publisher\elements\EntryPublish;
+use teamnovu\publisher\Publisher;
 use yii\web\NotFoundHttpException;
 
 /**
  * Class EntriesController
  *
- * @package neustadt\publisher\controllers
+ * @package teamnovu\publisher\controllers
  */
 class EntriesController extends Controller
 {

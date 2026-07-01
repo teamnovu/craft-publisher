@@ -18,7 +18,7 @@ lifecycle events.
 ## Installation
 
 ```shell
-composer require nst/craft-publisher
+composer require teamnovu/craft-publisher
 ```
 
 Then install the plugin in the Craft control panel under **Settings → Plugins**.

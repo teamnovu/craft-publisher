@@ -1,9 +1,15 @@
 # Changelog
 
+## 6.0.0 - 2026-07-01
+### Changed
+
+- **Breaking:** rebranded from Neustadt to Novu. The Composer package is now `teamnovu/craft-publisher` (was `nst/craft-publisher`) and the PHP namespace is now `teamnovu\publisher` (was `neustadt\publisher`). If your project extends any of the plugin's classes, update your `use` statements accordingly.
+- Update your `composer.json` to require `teamnovu/craft-publisher` instead of `nst/craft-publisher`, then run `composer update`. The plugin handle (`publisher-x`) and all functionality are unchanged.
+
 ## 5.1.0 - 2026-06-18
 ### Added
 
-- Added `EVENT_AFTER_PUBLISH_ENTRY` event on the `Entries` service, fired after each successful scheduled publication. Useful for triggering server-side cache purges. The event carries the canonical entry, the applied draft (or `null` for non-draft schedules), and the `EntryPublish` schedule record. See `EntryPublishedEvent`. ([#8](https://github.com/neustadt-swiss/craft-publisher/issues/8))
+- Added `EVENT_AFTER_PUBLISH_ENTRY` event on the `Entries` service, fired after each successful scheduled publication. Useful for triggering server-side cache purges. The event carries the canonical entry, the applied draft (or `null` for non-draft schedules), and the `EntryPublish` schedule record. See `EntryPublishedEvent`. ([#8](https://github.com/teamnovu/craft-publisher/issues/8))
 
 ### Fixed
 - Fixed redundant DB queries in `EntryPublish::getDraft()` and `getEntry()`: when the result was found, it was not cached, causing a new query on every subsequent call
@@ -37,7 +43,7 @@
 
 ## 3.0.1 - 2023-04-17
 ### Fixed
-- Fixed a bug where non-admin users were unable to publish drafts ([#1](https://github.com/neustadt-swiss/craft-publisher/issues/1))
+- Fixed a bug where non-admin users were unable to publish drafts ([#1](https://github.com/teamnovu/craft-publisher/issues/1))
 
 ## 3.0.0 - 2022-11-22
 ### Added

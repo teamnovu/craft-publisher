@@ -1,13 +1,13 @@
 <?php
 
-namespace neustadt\publisher\migrations;
+namespace teamnovu\publisher\migrations;
 
 use craft\db\Migration;
 
 /**
  * Class Install
  *
- * @package neustadt\publisher\migrations
+ * @package teamnovu\publisher\migrations
  */
 class Install extends Migration
 {

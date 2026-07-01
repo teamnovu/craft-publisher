@@ -1,6 +1,6 @@
 <?php
 
-namespace neustadt\publisher\elements\db;
+namespace teamnovu\publisher\elements\db;
 
 use craft\elements\db\ElementQuery;
 use craft\helpers\Db;

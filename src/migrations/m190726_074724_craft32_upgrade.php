@@ -1,6 +1,6 @@
 <?php
 
-namespace neustadt\publisher\migrations;
+namespace teamnovu\publisher\migrations;
 
 use Craft;
 use craft\db\Migration;

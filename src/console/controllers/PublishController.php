@@ -1,8 +1,8 @@
 <?php
 
-namespace neustadt\publisher\console\controllers;
+namespace teamnovu\publisher\console\controllers;
 
-use neustadt\publisher\Publisher;
+use teamnovu\publisher\Publisher;
 use yii\console\Controller;
 
 class PublishController extends Controller

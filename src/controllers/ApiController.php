@@ -1,14 +1,14 @@
 <?php
 
-namespace neustadt\publisher\controllers;
+namespace teamnovu\publisher\controllers;
 
 use craft\web\Controller;
-use neustadt\publisher\Publisher;
+use teamnovu\publisher\Publisher;
 
 /**
  * Class ApiController
  *
- * @package neustadt\publisher\controllers
+ * @package teamnovu\publisher\controllers
  */
 class ApiController extends Controller
 {

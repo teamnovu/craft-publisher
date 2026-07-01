@@ -1,17 +1,17 @@
 <?php
 
-namespace neustadt\publisher\services;
+namespace teamnovu\publisher\services;
 
 use Craft;
 use craft\base\Component;
 use craft\elements\Entry;
-use neustadt\publisher\elements\EntryPublish;
-use neustadt\publisher\events\EntryPublishedEvent;
+use teamnovu\publisher\elements\EntryPublish;
+use teamnovu\publisher\events\EntryPublishedEvent;
 
 /**
  * Class Entries
  *
- * @package neustadt\publisher\services
+ * @package teamnovu\publisher\services
  */
 class Entries extends Component
 {
@@ -147,10 +147,10 @@ class Entries extends Component
 
         if ($model->id) {
             $isNew = false;
-            $record = \neustadt\publisher\records\EntryPublish::findOne($model->id);
+            $record = \teamnovu\publisher\records\EntryPublish::findOne($model->id);
         } else {
             $isNew = true;
-            $record = new \neustadt\publisher\records\EntryPublish();
+            $record = new \teamnovu\publisher\records\EntryPublish();
         }
 
         $record->sourceId = $model->sourceId;
