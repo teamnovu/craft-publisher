@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.1.0 - 2026-11-20
+### Added
+
+- MCP tools for Craft 5.12 and later: `publisher_x_schedules_list`, `publisher_x_entry_drafts`, `publisher_x_schedule_draft` and `publisher_x_schedule_cancel`. An AI client connected to Craft's MCP server can now list what is scheduled, schedule a draft, move or cancel a scheduled draft, and delete the draft with its schedule. The tools require control panel access, apply the same entry, draft and site permissions as Craft's own draft tools and are never available anonymously. The write tools are marked destructive and ask the client to confirm every call. Post date and expiry schedules are listed but not changed: they follow the entry's own dates. On Craft before 5.12 nothing changes.
+
+### Changed
+
+- Entries saved through Craft's MCP server (e.g. a post date or expiry date changed with `elements_update`) now update their Publisher X schedules, like entries saved in the control panel.
+
 ## 6.0.0 - 2026-07-01
 ### Changed
 

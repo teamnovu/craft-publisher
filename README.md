@@ -52,6 +52,21 @@ If you use a full-page cache plugin such as Blitz, make sure you also run the qu
 * * * * * [PATH_TO_CRAFT]/craft queue/run
 ```
 
+## MCP (Craft 5.12+)
+
+On Craft 5.12 and later, Publisher X adds tools to Craft's built-in MCP server, so an AI client can answer "What's scheduled to publish this week?" or "Move that draft to next Monday 08:00". Enable the server under **Settings → MCP**; nothing changes on earlier Craft versions.
+
+| Tool | Scope | What it does |
+| --- | --- | --- |
+| `publisher_x_schedules_list` | read | Lists the schedules (draft, post date, expiry), filtered by date range, entry, site or type. |
+| `publisher_x_entry_drafts` | read | Lists an entry's saved drafts on a site and their schedules. |
+| `publisher_x_schedule_draft` | write | Schedules a draft, or moves a draft's schedule to a new date. |
+| `publisher_x_schedule_cancel` | write | Cancels a draft's schedule and, on request, deletes the draft. |
+
+All tools require control panel access and the same permissions as Craft's own draft tools: to schedule or cancel a draft, the user must be allowed to save the draft and its entry on that site. Dates without an offset are read in the system time zone. Post date and expiry schedules follow the entry's own dates, so the tools list them but do not change them; change the entry's dates instead (e.g. with `elements_update`).
+
+The draft is applied by the cron job (see [Setup](#setup)), so it must keep running every minute.
+
 ## Events
 
 ### `EVENT_AFTER_PUBLISH_ENTRY`
