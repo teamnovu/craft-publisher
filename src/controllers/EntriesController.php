@@ -9,7 +9,10 @@ use craft\helpers\DateTimeHelper;
 use craft\web\Controller;
 use teamnovu\publisher\elements\EntryPublish;
 use teamnovu\publisher\Publisher;
+use yii\web\BadRequestHttpException;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
 
 /**
  * Class EntriesController
@@ -30,6 +33,7 @@ class EntriesController extends Controller
     public function actionSave()
     {
         $this->requirePostRequest();
+        $this->requirePermission('accessCp');
 
         $draftId = Craft::$app->request->post('publisher_draftId');
         $publishAt = Craft::$app->request->post('publisher_publishAt');
@@ -51,8 +55,17 @@ class EntriesController extends Controller
             throw new ElementNotFoundException("No element exists with the ID '{$draft->getCanonicalId()}'");
         }
 
-        if ($draft->enabled && $entry->getSection() !== null) {
-            $this->requirePermission('saveEntries:' . $entry->getSection()->uid);
+        // Scheduling a draft applies it to the live entry, so it needs the same permissions as publishing
+        // the draft, whether or not the draft is enabled.
+        $user = Craft::$app->getUser()->getIdentity();
+        $elements = Craft::$app->getElements();
+
+        if (
+            !$elements->canView($draft, $user)
+            || !$elements->canSave($draft, $user)
+            || !$elements->canSave($entry, $user)
+        ) {
+            throw new ForbiddenHttpException('User is not authorized to schedule this draft.');
         }
 
         if ($publishAt !== null) {
@@ -78,37 +91,45 @@ class EntriesController extends Controller
     /**
      * Deletes the EntryPublish.
      *
-     * @return bool
+     * POST only (Craft validates the CSRF token of every POST request), and only for users who may
+     * access the control panel and save the scheduled entry and draft.
+     *
+     * @return Response
      * @throws \Throwable
+     * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     * @throws NotFoundHttpException
      */
-    public function actionDelete()
+    public function actionDelete(): Response
     {
-        $entriesService = Publisher::getInstance()->entries;
-        $publishEntryId = Craft::$app->request->getQueryParam('sourceId');
+        $this->requirePostRequest();
+        $this->requirePermission('accessCp');
 
-        if ($publishEntryId === null) {
+        $entriesService = Publisher::getInstance()->entries;
+        $publishEntryId = (int)$this->request->getRequiredBodyParam('id');
+
+        $entryPublish = $entriesService->getEntryPublishById($publishEntryId);
+        $entry = $entryPublish?->getEntry();
+
+        // Without an entry there is nothing to authorize against.
+        if ($entryPublish === null || $entry === null) {
             throw new NotFoundHttpException('EntryPublish not found');
         }
 
-        $entryPublish = $entriesService->getEntryPublishById($publishEntryId);
+        $draft = $entryPublish->getDraft();
+        $user = Craft::$app->getUser()->getIdentity();
+        $elements = Craft::$app->getElements();
 
-        if ($entryPublish !== null) {
-            $entry = $entryPublish->getEntry();
-            $draft = $entryPublish->getDraft();
-
-            $entriesService->deleteEntryPublish($publishEntryId);
-
-            if ($draft !== null) {
-                $this->redirect($draft->getCpEditUrl());
-            } elseif ($entry !== null) {
-                $this->redirect($entry->getCpEditUrl());
-            } else {
-                $this->redirect('entries');
-            }
-
-            return true;
+        if (
+            !$elements->canView($entry, $user)
+            || !$elements->canSave($entry, $user)
+            || ($draft !== null && (!$elements->canView($draft, $user) || !$elements->canSave($draft, $user)))
+        ) {
+            throw new ForbiddenHttpException('User is not authorized to delete this scheduled publication.');
         }
 
-        throw new NotFoundHttpException('EntryPublish not found');
+        $entriesService->deleteEntryPublish($publishEntryId);
+
+        return $this->redirect($draft?->getCpEditUrl() ?? $entry->getCpEditUrl() ?? 'entries');
     }
 }

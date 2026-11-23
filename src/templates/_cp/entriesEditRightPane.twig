@@ -58,7 +58,10 @@
 					<div class="value">
 						{{ pendingEntry.publishAt|date('short') }}
 						{{ pendingEntry.publishAt|time('short') }}
-						&nbsp;<a href="{{ actionUrl('publisher-x/entries/delete/', {sourceId: pendingEntry.id}) }}" class="btn small">{{ 'Delete'|t('app') }}</a>
+						{% if canPublishDraft %}
+							{# POST with CSRF token: data-form="false" submits a standalone form instead of the entry form. #}
+							&nbsp;<button type="button" class="btn small formsubmit" data-form="false" data-action="publisher-x/entries/delete" data-param="id" data-value="{{ pendingEntry.id }}">{{ 'Delete'|t('app') }}</button>
+						{% endif %}
 					</div>
 				</div>
 			{% endfor %}

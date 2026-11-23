@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.1.1 - 2026-11-23
+### Security
+
+- Fixed `publisher-x/entries/save` (the "Add publish date" button): the section permission was only checked for enabled drafts, so any logged-in user could schedule a disabled draft, and control panel access was never required. The action now requires control panel access and that the user can view and save the draft and save the entry, whether or not the draft is enabled. These are the same permissions Craft needs to publish a draft.
+- Fixed the "Delete" button of a scheduled publication in the control panel. It deleted with a plain GET link, so it was open to CSRF (e.g. an `<img src>` on another page deleted a schedule for a logged-in user) and checked no permissions at all: any logged-in user could delete any schedule by ID. `publisher-x/entries/delete` now only accepts POST requests (with Craft's CSRF token), requires control panel access and requires that the user can view and save the scheduled entry and its draft. The button is only shown to users who may save entries in the section. If you call this action from your own code, send a POST request with the schedule ID as the `id` body parameter instead of `sourceId` in the query string.
+
 ## 6.1.0 - 2026-11-20
 ### Added
 
