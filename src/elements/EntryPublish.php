@@ -9,6 +9,7 @@ use craft\elements\Entry;
 use craft\models\EntryDraft;
 use craft\validators\DateTimeValidator;
 use teamnovu\publisher\elements\db\EntryPublishQuery;
+use teamnovu\publisher\elements\db\EntryPublishQueryCraft6;
 use yii\validators\BooleanValidator;
 
 /**
@@ -107,10 +108,15 @@ class EntryPublish extends Element
     }
 
     /**
-     * @return EntryPublishQuery
+     * @return EntryPublishQuery|EntryPublishQueryCraft6
      */
     public static function find(): ElementQueryInterface
     {
+        // Craft 6 builds element queries differently (see EntryPublishQueryCraft6).
+        if (class_exists('CraftCms\\Cms\\Element\\Queries\\ElementQuery')) {
+            return new EntryPublishQueryCraft6(static::class);
+        }
+
         return new EntryPublishQuery(static::class);
     }
 

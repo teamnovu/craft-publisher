@@ -85,7 +85,9 @@ class Publisher extends Plugin
                 function (DefineHtmlEvent $event) {
                     $element = $event->sender;
 
-                    if ((get_class($element) == Entry::class)) {
+                    // instanceof, not a class comparison: Craft 6 loads its native Entry class,
+                    // which `craft\elements\Entry` only aliases.
+                    if ($element instanceof Entry) {
                         $isNew = $element->id === null;
 
                         if ($isNew) {

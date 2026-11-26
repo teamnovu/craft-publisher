@@ -22,6 +22,7 @@ use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
 use Mcp\Schema\ToolAnnotations;
 use teamnovu\publisher\elements\db\EntryPublishQuery;
+use teamnovu\publisher\elements\db\EntryPublishQueryCraft6;
 use teamnovu\publisher\elements\EntryPublish;
 use teamnovu\publisher\Publisher;
 use Throwable;
@@ -423,9 +424,9 @@ class PublisherTools
     // Private Methods
     // =========================================================================
 
-    private function scheduleQuery(): EntryPublishQuery
+    private function scheduleQuery(): EntryPublishQuery|EntryPublishQueryCraft6
     {
-        /** @var EntryPublishQuery $query */
+        /** @var EntryPublishQuery|EntryPublishQueryCraft6 $query */
         $query = EntryPublish::find();
 
         // Schedules are not localized; this also finds them when the request runs on another site.
