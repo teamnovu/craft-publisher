@@ -5,10 +5,6 @@ namespace teamnovu\publisher\elements\db;
 use craft\elements\db\ElementQuery;
 use craft\helpers\Db;
 
-/**
- * Schedule query for Craft 4 and 5. Craft 6 uses {@see EntryPublishQueryCraft6}, because it no
- * longer calls beforePrepare().
- */
 class EntryPublishQuery extends ElementQuery
 {
     use EntryPublishQueryTrait;

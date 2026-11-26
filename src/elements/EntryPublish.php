@@ -112,7 +112,7 @@ class EntryPublish extends Element
      */
     public static function find(): ElementQueryInterface
     {
-        // Craft 6 builds element queries differently (see EntryPublishQueryCraft6).
+        // Craft 6 element queries don't call beforePrepare().
         if (class_exists('CraftCms\\Cms\\Element\\Queries\\ElementQuery')) {
             return new EntryPublishQueryCraft6(static::class);
         }

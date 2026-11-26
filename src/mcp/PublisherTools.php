@@ -13,6 +13,8 @@ use craft\elements\User;
 use craft\helpers\DateTimeHelper;
 use craft\mcp\attributes\RequiresPermission;
 use craft\mcp\McpActor;
+use CraftCms\Cms\Mcp\Attributes\RequiresPermission as RequiresPermissionCraft6;
+use CraftCms\Cms\Mcp\McpActor as McpActorCraft6;
 use craft\models\Site;
 use DateTime;
 use DateTimeInterface;
@@ -28,11 +30,9 @@ use teamnovu\publisher\Publisher;
 use Throwable;
 
 /**
- * Publisher X tools for Craft's MCP server (Craft 5.12+).
+ * Publisher X tools for Craft's MCP server (Craft 5.12+ and Craft 6).
  *
- * Craft builds a new instance for every tool call, so only stateless services are
- * injected. This class is only referenced when Craft's MCP classes exist, see
- * Publisher::registerMcpCapabilities().
+ * Only referenced when Craft's MCP classes exist, see Publisher::registerMcpCapabilities().
  */
 class PublisherTools
 {
@@ -63,11 +63,6 @@ class PublisherTools
         'description' => 'Site handle (e.g. "de"), language (e.g. "en") or numeric site ID.',
     ];
 
-    public function __construct(
-        private McpActor $actor,
-    ) {
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -78,6 +73,7 @@ class PublisherTools
         annotations: new ToolAnnotations(readOnlyHint: true),
     )]
     #[RequiresPermission('accessCp')]
+    #[RequiresPermissionCraft6('accessCp')]
     public function schedulesList(
         #[Schema(description: 'Earliest publish date, e.g. "2026-11-23" or "2026-11-23T08:00" (system time zone if no offset is given). Leave out to include overdue schedules.')]
         ?string $from = null,
@@ -96,7 +92,7 @@ class PublisherTools
         #[Schema(description: 'Most schedules to return, at most 200.', minimum: 1, maximum: self::MAX_SCHEDULES)]
         int $limit = 50,
     ): array {
-        $user = $this->actor->user();
+        $user = $this->user();
         $now = $this->now();
         $fromDate = $this->isBlank($from) ? null : $this->parseDate((string)$from, 'from');
         $toDate = $this->isBlank($to) ? null : $this->parseDate((string)$to, 'to', endOfDay: true);
@@ -174,13 +170,14 @@ class PublisherTools
         annotations: new ToolAnnotations(readOnlyHint: true),
     )]
     #[RequiresPermission('accessCp')]
+    #[RequiresPermissionCraft6('accessCp')]
     public function entryDrafts(
         #[Schema(description: 'ID of the entry (its canonical ID, not a draft ID).', minimum: 1)]
         int $entryId,
         #[Schema(definition: ['description' => 'Site of the entry. Defaults to the primary site, or the first site the entry exists on.'] + self::SITE_SCHEMA)]
         string|int|null $site = null,
     ): array {
-        $user = $this->actor->user();
+        $user = $this->user();
         $now = $this->now();
         $siteModel = $this->isBlank($site) ? null : $this->resolveSite($site, 'site');
         $entry = $this->findEntry($entryId, $siteModel, $user);
@@ -249,6 +246,7 @@ class PublisherTools
         meta: ['anthropic/requiresUserInteraction' => true],
     )]
     #[RequiresPermission('accessCp')]
+    #[RequiresPermissionCraft6('accessCp')]
     public function scheduleDraft(
         #[Schema(description: 'When to publish, e.g. "2026-11-23T08:00" (system time zone) or "2026-11-23T08:00:00+01:00".')]
         string $publishAt,
@@ -259,7 +257,7 @@ class PublisherTools
         #[Schema(definition: ['description' => 'Site of the draft, used with draftElementId. Defaults to the primary site, or the first site the draft exists on.'] + self::SITE_SCHEMA)]
         string|int|null $site = null,
     ): array {
-        $user = $this->actor->user();
+        $user = $this->user();
 
         if (($draftElementId === null) === ($scheduleId === null)) {
             throw new ToolCallException('Give either draftElementId or scheduleId.');
@@ -353,13 +351,14 @@ class PublisherTools
         meta: ['anthropic/requiresUserInteraction' => true],
     )]
     #[RequiresPermission('accessCp')]
+    #[RequiresPermissionCraft6('accessCp')]
     public function scheduleCancel(
         #[Schema(description: 'ID of the schedule, from publisher_x_schedules_list or publisher_x_entry_drafts.', minimum: 1)]
         int $scheduleId,
         #[Schema(description: 'Also delete the draft permanently. Only when the user asks to drop the draft too.')]
         bool $deleteDraft = false,
     ): array {
-        $user = $this->actor->user();
+        $user = $this->user();
         $now = $this->now();
         $elements = Craft::$app->getElements();
         $schedule = $this->findSchedule($scheduleId, $user);
@@ -423,6 +422,15 @@ class PublisherTools
 
     // Private Methods
     // =========================================================================
+
+    private function user(): User
+    {
+        if (class_exists(McpActorCraft6::class)) {
+            return app(McpActorCraft6::class)->user()->asElement();
+        }
+
+        return (new McpActor())->user();
+    }
 
     private function scheduleQuery(): EntryPublishQuery|EntryPublishQueryCraft6
     {
@@ -646,14 +654,15 @@ class PublisherTools
     private function describeDraft(Entry $draft): array
     {
         $behavior = $draft->getBehavior('draft');
-        $creatorId = $behavior->creatorId ?? null;
+        // Craft 6 keeps the draft data on the element, not in a behavior.
+        $creatorId = $behavior->creatorId ?? $draft->draftCreatorId ?? null;
         $creator = $creatorId ? Craft::$app->getUsers()->getUserById((int)$creatorId) : null;
 
         return [
             'draftElementId' => (int)$draft->id,
             'draftId' => (int)$draft->draftId,
-            'name' => $behavior->draftName ?? null,
-            'notes' => ($behavior->draftNotes ?? null) ?: null,
+            'name' => $behavior->draftName ?? $draft->draftName ?? null,
+            'notes' => ($behavior->draftNotes ?? $draft->draftNotes ?? null) ?: null,
             'creator' => $creator?->getName(),
             'dateUpdated' => $this->formatOptionalDate($draft->dateUpdated),
             'cpEditUrl' => $draft->getCpEditUrl(),

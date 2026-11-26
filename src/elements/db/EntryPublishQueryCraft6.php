@@ -6,12 +6,7 @@ use craft\base\ElementInterface;
 use craft\elements\db\ElementQuery;
 use craft\helpers\DateTimeHelper;
 
-/**
- * Schedule query for Craft 6, where `craft\elements\db\ElementQuery` is the native
- * Laravel-based query. Craft 6 no longer calls beforePrepare() (so {@see EntryPublishQuery}
- * would return every schedule, unfiltered): the table is declared with `$table` and the
- * criteria are applied in a beforeQuery() callback. Only loaded on Craft 6.
- */
+/** Only loaded on Craft 6, see EntryPublish::find(). */
 class EntryPublishQueryCraft6 extends ElementQuery
 {
     use EntryPublishQueryTrait;
@@ -54,10 +49,7 @@ class EntryPublishQueryCraft6 extends ElementQuery
         });
     }
 
-    /**
-     * Craft 6 doesn't normalize the element's datetimeAttributes() when loading it, so convert
-     * the raw columns here to the types Craft 5 gives (publishAt is stored in UTC).
-     */
+    // Craft 6 doesn't typecast datetimeAttributes() on load; publishAt is stored in UTC.
     public function createElement(array $row): ElementInterface
     {
         if (isset($row['publishAt']) && is_string($row['publishAt'])) {

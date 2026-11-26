@@ -57,7 +57,7 @@ class Publisher extends Plugin
                     return;
                 }
 
-                // Saves from the control panel and, on Craft 5.12+, from Craft's MCP server.
+                // Saves from the control panel or from Craft's MCP server.
                 if (!$isCpRequest && !self::isMcpRequest()) {
                     return;
                 }
@@ -85,8 +85,7 @@ class Publisher extends Plugin
                 function (DefineHtmlEvent $event) {
                     $element = $event->sender;
 
-                    // instanceof, not a class comparison: Craft 6 loads its native Entry class,
-                    // which `craft\elements\Entry` only aliases.
+                    // On Craft 6 craft\elements\Entry is an alias, so get_class() returns the native class.
                     if ($element instanceof Entry) {
                         $isNew = $element->id === null;
 
@@ -114,12 +113,22 @@ class Publisher extends Plugin
     }
 
     /**
-     * Registers the Publisher X tools on Craft's MCP server (Craft 5.12+). Does nothing on
+     * Registers the Publisher X tools on Craft's MCP server (Craft 5.12+ and Craft 6). Does nothing on
      * earlier Craft versions.
      */
     private function registerMcpCapabilities(): void
     {
-        if (!class_exists('craft\services\Mcp') || !class_exists('Mcp\Capability\Attribute\McpTool')) {
+        if (!class_exists('Mcp\Capability\Attribute\McpTool')) {
+            return;
+        }
+
+        if (class_exists('CraftCms\Cms\Mcp\CapabilityRegistry')) {
+            app(\CraftCms\Cms\Mcp\CapabilityRegistry::class)->register(PublisherTools::class);
+
+            return;
+        }
+
+        if (!class_exists('craft\services\Mcp')) {
             return;
         }
 
@@ -137,6 +146,13 @@ class Publisher extends Plugin
      */
     private static function isMcpRequest(): bool
     {
+        // Craft 6 has no Yii MCP controller; it tags MCP requests (HTTP and stdio) with an activity origin.
+        if (class_exists('CraftCms\Cms\Activity\ActivityEventRecorder')) {
+            return \Illuminate\Support\Facades\Context::getHidden(
+                \CraftCms\Cms\Activity\ActivityEventRecorder::ContextOrigin
+            ) === 'MCP';
+        }
+
         $controller = Craft::$app->controller;
 
         return $controller !== null && in_array(get_class($controller), [

@@ -1,8 +1,8 @@
 {% import "_includes/forms" as forms %}
-{% set pendingEntries = craft.publisherEntries.getPendingEntries(entry.id) %}
 {% set drafts = craft.entries.draftOf(entry.id).siteId(entry.site.id).status(null).all %}
 {% set canPublishDraft = currentUser.can('saveEntries'~permissionSuffix) %}
 {% set isVersion = className(entry) == 'craft\\models\\EntryVersion' %}
+{% set paneKey = random() %}
 
 <style>
 	.publisher-x-actions {
@@ -40,47 +40,23 @@
 	}
 </style>
 
-<div class="meta">
-	<div class="pending-publisher-x">
-		{% if pendingEntries|length == 0 %}
-			<div class="data pending-publisher-x-schedule">
-				<h4>{{ 'No pending publish dates'|t('publisher-x') }}</h4>
-			</div>
-		{% else %}
-			<div class="data pending-publisher-x-schedule">
-				<h4>{{ 'Pending publish dates'|t('publisher-x') }}</h4>
-			</div>
-
-			{% for pendingEntry in pendingEntries %}
-				{% set title = pendingEntry.draft ? pendingEntry.draft.draftName : pendingEntry.entry.title %}
-				<div class="data">
-					<h5>{{ title }}{{ pendingEntry.expire ? ' ('~'Expires'|t('publisher-x')~')' }}</h5>
-					<div class="value">
-						{{ pendingEntry.publishAt|date('short') }}
-						{{ pendingEntry.publishAt|time('short') }}
-						{% if canPublishDraft %}
-							{# POST with CSRF token: data-form="false" submits a standalone form instead of the entry form. #}
-							&nbsp;<button type="button" class="btn small formsubmit" data-form="false" data-action="publisher-x/entries/delete" data-param="id" data-value="{{ pendingEntry.id }}">{{ 'Delete'|t('app') }}</button>
-						{% endif %}
-					</div>
-				</div>
-			{% endfor %}
-		{% endif %}
-	</div>
+<div class="meta" data-publisher-x-pending="{{ paneKey }}">
+	{% include 'publisher-x/_cp/pendingEntries' %}
 </div>
 
+{# The inputs have no name, so the entry editor neither saves nor autosaves them with the entry. #}
 {% if drafts|length > 0 and canPublishDraft %}
-	<div class="meta publisher-x-schedule">
+	<div class="meta publisher-x-schedule" data-publisher-x-form="{{ paneKey }}" data-site-id="{{ entry.site.id }}" data-locale="{{ craft.app.formattingLocale.id }}" data-timezone="{{ craft.app.timeZone }}">
 		<div class="publisher-x-heading">
 			<h4>{{ 'Schedule a publish date'|t('publisher-x') }}</h4>
 		</div>
 		<div class="field">
 			<div class="heading">
-				<label>{{ 'Draft'|t('publisher-x') }}</label>
+				<label for="publisherDraftId{{ paneKey }}">{{ 'Draft'|t('publisher-x') }}</label>
 			</div>
 			<div class="input">
 				<div class="select">
-					<select name="publisher_draftId">
+					<select id="publisherDraftId{{ paneKey }}" data-publisher-x-draft>
 						{% for draft in drafts %}
 							<option value="{{ draft.draftId }}">{{ draft.draftName }}</option>
 						{% endfor %}
@@ -89,16 +65,9 @@
 			</div>
 		</div>
 
-		{{ forms.hidden({
-            id: 'sourceSiteId',
-            name: 'publisher_sourceSiteId',
-            value: entry.site.id,
-        }) }}
-
 		{{ forms.dateTimeField({
             label: "Publish date"|t('publisher-x'),
-            id: 'publishAt',
-            name: 'publisher_publishAt',
+            id: 'publisherPublishAt' ~ paneKey,
             value: now,
             errors: publisherEntry is defined ? publisherEntry.getError('publishAt') : null,
             disabled: isVersion
@@ -106,10 +75,50 @@
 
 		<div class="publisher-x-actions">
 			<div>
-				<input type="button" class="btn formsubmit " value="{{ 'Add publish date'|t('publisher-x') }}" data-action="publisher-x/entries/save"/>
+				<button type="button" class="btn" data-publisher-x-add>{{ 'Add publish date'|t('publisher-x') }}</button>
 			</div>
 		</div>
-
-
 	</div>
+
+	{% js %}
+		(function() {
+			var form = document.querySelector('[data-publisher-x-form="{{ paneKey }}"]');
+			var pending = document.querySelector('[data-publisher-x-pending="{{ paneKey }}"]');
+			if (!form || !pending) {
+				return;
+			}
+			var button = form.querySelector('[data-publisher-x-add]');
+			var value = function(selector) {
+				var input = form.querySelector(selector);
+				return input ? input.value : '';
+			};
+			button.addEventListener('click', function() {
+				if (button.classList.contains('loading')) {
+					return;
+				}
+				button.classList.add('loading');
+				Craft.sendActionRequest('POST', 'publisher-x/entries/save', {
+					data: {
+						publisher_draftId: value('[data-publisher-x-draft]'),
+						publisher_sourceSiteId: form.dataset.siteId,
+						publisher_publishAt: {
+							date: value('input[id$="-date"]'),
+							time: value('input[id$="-time"]'),
+							locale: form.dataset.locale,
+							timezone: form.dataset.timezone,
+						},
+					},
+				}).then(function(response) {
+					pending.innerHTML = response.data.html;
+					Craft.initUiElements(pending);
+					Craft.cp.displaySuccess(response.data.message);
+				}).catch(function(error) {
+					var data = error && error.response && error.response.data;
+					Craft.cp.displayError(data && (data.message || data.error) || Craft.t('app', 'A server error occurred.'));
+				}).finally(function() {
+					button.classList.remove('loading');
+				});
+			});
+		})();
+	{% endjs %}
 {% endif %}

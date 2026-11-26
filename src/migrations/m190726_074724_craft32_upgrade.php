@@ -5,7 +5,6 @@ namespace teamnovu\publisher\migrations;
 use Craft;
 use craft\db\Migration;
 use craft\db\Table;
-use craft\helpers\MigrationHelper;
 
 /**
  * m190726_074724_craft32_upgrade migration.
@@ -20,7 +19,7 @@ class m190726_074724_craft32_upgrade extends Migration
         $alreadyMigrated = $this->db->columnExists('{{%entrypublishes}}','sourceId');
 
         if (!$alreadyMigrated) {
-            MigrationHelper::dropForeignKey('{{%entrypublishes}}', ['draftId'], $this);
+            $this->dropForeignKeyIfExists('{{%entrypublishes}}', ['draftId']);
 
             $this->renameColumn('{{%entrypublishes}}', 'entryId', 'sourceId');
             $this->renameColumn('{{%entrypublishes}}', 'draftId', 'publishDraftId');

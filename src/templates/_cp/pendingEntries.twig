@@ -1,0 +1,29 @@
+{% set pendingEntries = craft.publisherEntries.getPendingEntries(entry.id) %}
+{% set canPublishDraft = currentUser.can('saveEntries:' ~ entry.section.uid) %}
+
+<div class="pending-publisher-x">
+	{% if pendingEntries|length == 0 %}
+		<div class="data pending-publisher-x-schedule">
+			<h4>{{ 'No pending publish dates'|t('publisher-x') }}</h4>
+		</div>
+	{% else %}
+		<div class="data pending-publisher-x-schedule">
+			<h4>{{ 'Pending publish dates'|t('publisher-x') }}</h4>
+		</div>
+
+		{% for pendingEntry in pendingEntries %}
+			{% set title = pendingEntry.draft ? pendingEntry.draft.draftName : pendingEntry.entry.title %}
+			<div class="data">
+				<h5>{{ title }}{{ pendingEntry.expire ? ' ('~'Expires'|t('publisher-x')~')' }}</h5>
+				<div class="value">
+					{{ pendingEntry.publishAt|date('short') }}
+					{{ pendingEntry.publishAt|time('short') }}
+					{% if canPublishDraft %}
+						{# POST with CSRF token: data-form="false" submits a standalone form instead of the entry form. #}
+						&nbsp;<button type="button" class="btn small formsubmit" data-form="false" data-action="publisher-x/entries/delete" data-param="id" data-value="{{ pendingEntry.id }}">{{ 'Delete'|t('app') }}</button>
+					{% endif %}
+				</div>
+			</div>
+		{% endfor %}
+	{% endif %}
+</div>

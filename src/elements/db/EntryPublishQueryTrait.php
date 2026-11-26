@@ -2,10 +2,6 @@
 
 namespace teamnovu\publisher\elements\db;
 
-/**
- * Criteria shared by the Craft 4/5 query ({@see EntryPublishQuery}) and the Craft 6 one
- * ({@see EntryPublishQueryCraft6}).
- */
 trait EntryPublishQueryTrait
 {
     /**

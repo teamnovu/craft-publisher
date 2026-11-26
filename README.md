@@ -12,7 +12,7 @@ lifecycle events.
 
 ## Requirements
 
-- Craft CMS 5.0+
+- Craft CMS 5.0+, or Craft CMS 6 with `craftcms/yii2-adapter`
 - PHP 8.2+
 
 ## Installation
@@ -34,7 +34,11 @@ Create a cron job that runs **every minute**. You can invoke Publisher X via CLI
 **CLI (recommended):**
 
 ```shell
+# Craft 5
 * * * * * [PATH_TO_CRAFT]/craft publisher-x/publish
+
+# Craft 6 (the slash form still works but is deprecated)
+* * * * * php [PATH_TO_CRAFT]/artisan craft:publisher-x:publish
 ```
 
 **Web:**
@@ -52,9 +56,9 @@ If you use a full-page cache plugin such as Blitz, make sure you also run the qu
 * * * * * [PATH_TO_CRAFT]/craft queue/run
 ```
 
-## MCP (Craft 5.12+)
+## MCP (Craft 5.12+ and Craft 6)
 
-On Craft 5.12 and later, Publisher X adds tools to Craft's built-in MCP server, so an AI client can answer "What's scheduled to publish this week?" or "Move that draft to next Monday 08:00". Enable the server under **Settings → MCP**; nothing changes on earlier Craft versions.
+On Craft 5.12 and later, and on Craft 6, Publisher X adds tools to Craft's built-in MCP server, so an AI client can answer "What's scheduled to publish this week?" or "Move that draft to next Monday 08:00". Enable the server under **Settings → MCP**; nothing changes on earlier Craft versions.
 
 | Tool | Scope | What it does |
 | --- | --- | --- |

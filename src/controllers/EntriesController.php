@@ -30,14 +30,18 @@ class EntriesController extends Controller
      * @throws \yii\web\BadRequestHttpException
      * @throws \yii\web\ForbiddenHttpException
      */
-    public function actionSave()
+    public function actionSave(): ?Response
     {
         $this->requirePostRequest();
         $this->requirePermission('accessCp');
 
-        $draftId = Craft::$app->request->post('publisher_draftId');
-        $publishAt = Craft::$app->request->post('publisher_publishAt');
-        $siteId = Craft::$app->request->post('publisher_sourceSiteId');
+        $draftId = $this->request->getBodyParam('publisher_draftId');
+        $publishAt = $this->request->getBodyParam('publisher_publishAt');
+        $siteId = $this->request->getBodyParam('publisher_sourceSiteId');
+
+        if (!$draftId || !$siteId) {
+            throw new BadRequestHttpException('A draft and a site are required.');
+        }
 
         $draft = Entry::find()
             ->draftId($draftId)
@@ -46,7 +50,7 @@ class EntriesController extends Controller
             ->one();
 
         if ($draft === null) {
-            throw new \Exception('Invalid entry draft ID: ' . $draftId);
+            throw new NotFoundHttpException('Invalid entry draft ID: ' . $draftId);
         }
 
         $entry = Craft::$app->entries->getEntryById($draft->getCanonicalId(), $siteId);
@@ -68,23 +72,29 @@ class EntriesController extends Controller
             throw new ForbiddenHttpException('User is not authorized to schedule this draft.');
         }
 
-        if ($publishAt !== null) {
-            $publishAt = DateTimeHelper::toDateTime($publishAt, true);
-        }
-
         $model = new EntryPublish();
         $model->sourceId = $entry->id;
         $model->publishDraftId = $draft->draftId;
-        $model->publishAt = $publishAt;
+        $model->publishAt = $publishAt ? DateTimeHelper::toDateTime($publishAt, true) : null;
         $model->sourceSiteId = $siteId;
 
-        if (!Publisher::getInstance()->entries->saveEntryPublish($model)) {
-            Craft::$app->getUrlManager()->setRouteParams(
-                [
-                    'publisherEntry' => $model,
-                ]
+        if (!$model->publishAt) {
+            $model->addError('publishAt', Craft::t('publisher-x', 'Enter a valid publish date.'));
+        }
+
+        if ($model->hasErrors() || !Publisher::getInstance()->entries->saveEntryPublish($model)) {
+            return $this->asFailure(
+                implode(' ', $model->getErrorSummary(false)) ?: Craft::t('publisher-x', 'Couldn’t save the publish date.'),
+                ['errors' => $model->getErrors()],
+                ['publisherEntry' => $model],
             );
         }
+
+        return $this->asSuccess(Craft::t('publisher-x', 'Publish date added.'), [
+            'html' => $this->getView()->renderTemplate('publisher-x/_cp/pendingEntries', [
+                'entry' => $entry,
+            ]),
+        ]);
     }
 
 
